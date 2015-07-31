@@ -6,9 +6,106 @@ function doblocks(f, includeTxs) {
 	    break;
 	}
 	total++;
+	if (total > 10000) {
+	    return total;
+	}
 	f(i, b);
     }
     return total;
+}
+
+function contsets() {
+    var bn = eth.getBlock("latest").number;
+    var count = 1;
+    var addr = "";
+    var miner = "";
+    var set = [];
+    var tempset = [];
+    for (i = 10000; i < bn; i++) {
+	if (i%200 == 0) {
+	    console.log("processed", i, "blocks");
+	}
+	//console.log("addr:",addr,"cb:", eth.getBlock(i).miner);
+	miner = eth.getBlock(i).miner;
+	if (addr == miner) {
+	    tempset.push(i);
+	    count++;
+	} else {
+	    if (count > 1) {
+		set.push(tempset);
+		tempset = [];
+	    }
+	    count = 1;
+	    tempset = []
+	    tempset.push(miner);
+	    tempset.push(i);
+	}
+    addr = miner;
+    }
+
+    set.sort(function(a, b) {
+	if (a.length < b.length) {
+	    return -1;
+	} else if (a.length == b.length) {
+	    return 0;
+	} else {
+	    return 1;
+	}
+    });
+
+return set;
+}
+
+function blocktimes() {
+    var bn = 10000; //eth.getBlock("latest").number;
+    var set = [];
+    var count = 0
+    var set = []
+    var tempset = []
+    var interval = 200
+    for (i = 1; i < bn - 1; i++) {
+	if (i%200 == 0) {
+	    console.log("processed", i, "blocks");
+	}
+	ts1 = eth.getBlock(i).timestamp;
+	ts2 = eth.getBlock(i + 1).timestamp;
+	diff = ts2 - ts1;
+	if (i < 50) {
+	    console.log(diff);
+	}
+	tempset.push(diff);
+	if (count == interval) {
+	    var sum = 0;
+	    for (j = i - interval; j < i; j++) {
+		sum = sum + tempset[j];
+	    }
+	    set.push(sum / interval);
+	    count = 0;
+	}
+	count++;
+    }
+    return set
+}
+
+function uncles() {
+    var bn = 1000; //eth.getBlock("latest").number;
+    var uncles = 0;
+    var singles = 0;
+    var doubles = 0;
+    for (i = 1; i < bn - 1; i++) {
+	if (i%200 == 0) {
+	    console.log("processed", i, "blocks");
+	}
+	us = eth.getBlock(i).uncles.length;
+	uncles = uncles + us;
+	if (us == 1) {
+	    singles = singles + 1;
+	}
+	if (us == 2) {
+	    doubles = doubles + 1;
+	}
+    }
+    return [uncles, singles, doubles];
 }
 
 function anytxs() {
@@ -25,6 +122,9 @@ function countblocks() {
 	if (i%200 == 0) {
 	    console.log("counting...", i);
 	}
+	//if (b.number < 9000 || b.number > 10000) {
+	  //  return
+    //}
 	if (!m[b.miner]) {
 	    m[b.miner] = 1;
 	} else {
@@ -72,4 +172,3 @@ function printextra() {
 	}
     });
 }
-       
